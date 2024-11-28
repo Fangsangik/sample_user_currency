@@ -4,6 +4,7 @@ import com.sparta.currency_user.exchange.dto.ExchangeRequestDto;
 import com.sparta.currency_user.exchange.dto.ExchangeResponseDto;
 import com.sparta.currency_user.exchange.dto.ExchangeSumDto;
 import com.sparta.currency_user.exchange.service.ExchangeService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,13 +33,13 @@ public class ExchangeController {
     }
 
     @PostMapping
-    public ResponseEntity<ExchangeResponseDto> performExchange(@RequestBody ExchangeRequestDto exchangeRequest) {
+    public ResponseEntity<ExchangeResponseDto> performExchange(@Valid @RequestBody ExchangeRequestDto exchangeRequest) {
         ExchangeResponseDto exchangeById = exchangeService.performExchange(exchangeRequest);
         return ResponseEntity.ok(exchangeById);
     }
 
     @PutMapping("/update-status")
-    public ResponseEntity<List<ExchangeResponseDto>> updateExchangeStatus(@RequestBody ExchangeRequestDto request) {
+    public ResponseEntity<List<ExchangeResponseDto>> updateExchangeStatus(@Valid @RequestBody ExchangeRequestDto request) {
         List<ExchangeResponseDto> response = exchangeService.updateExchangeStatus(
                 request.getUserId(), request.getCurrencyId(), request.getExchangeStatus());
         return ResponseEntity.ok(response);

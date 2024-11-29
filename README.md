@@ -37,6 +37,10 @@ BigDecimal result = amount.divide(exchangeRate, scale, roundingMode);
 - 한개의 UserId로 여러번 update 실행했을때 getSingleResult로 반환해 문제 발생
   - update 쿼리를 실행후, 업데이트 된 데이터 조회 하는 방향으로 설계 
 
+- update시 소수점 적용 안되는 문제와 최종적으로 보여져야 하는 환전 값 + symbol이 나오지 않음 
+  - formatter라는 interface를 따로 빼서 작성 
+  - 그리고 각 메서드 마다 foramtter 기능을 추가해 값 + symbol이 보여지게 만듬 
+  - 소수점 처리하는 기능을 추가 안함 
 ## 🚀 Refactoring
 - 소수점 계산 로직 처리 
 ```
@@ -77,13 +81,22 @@ public abstract class ExchangeCalculator {
 - 단순 계산 로직 이라고 생각해 service단 에서 있어야 된다고 생각이 안들었다. 단순 계산 기능만 하는 거라면 추상클래스로 빼서 생각해도 괜찮지 않을까? 
    
 ## 👨‍💻 시도한 것과 이유 & 궁금증 
-1. ExchangeCalculator를 추상 클래스로 적용한 이유 
+1.  추상 클래스로 적용한 이유 
+
+1) ExchangeCalculator
 
 이번 프로젝트를 적용하면서 확장 가능성과 변경 가능성에 열어두고 작성을 해보았습니다. 
 적용해본 예로는 소수점 처리 계산 부분입니다. 
 abstract로 빼 2째 자리로 처리해도 되고 만약 처리 하는 방법이 2째 자리를 두고 다른 통화의 경우 3째자리 까지만 변경하라고 한다면 그 부분만 작성하면 된다고 생각했습니다. 
 또다른 서비스 로직을 작성할 필요 없이 소수점 처리만 변경 혹은 작성하면 된다고 생각해 abstract class로 빼 보았습니다. 
 그리고 ExchangeCalculator는 단순 소수점 처리만 하는 기능이기 때문에 Service에 있는 것 보다는 따로 기능을 빼서 처리하는게 좋다고 판단이 되었습니다. 
+
+2) ExchangeFormatter
+
+인터패이스로 ExchangeForamtter라는 값을 갖고, ExchangeForamtterImpl을 정의했다. 
+CurrencyName을 갖고 true일 경우 버리고, 아닐 경우 2째 자리 까지만 표기 하는 기능 
+ExchangeForamtter 또한 단순 변환 기능 이기에 추상 클래스가 좋을까 인터페이스가 좋을까에 대한 고민이 있었습니다.
+나중에 데이터 변환이라는 동작이 다양한 구현을 지원하는 경우를 생각해 작성했고, 상태를 갖기 보다는 순수 기능 중심일 것 같다는 생각이 들었습니다. 
 
 2. toEntiy toDto 
 

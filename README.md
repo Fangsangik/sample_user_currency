@@ -83,7 +83,7 @@ public abstract class ExchangeCalculator {
 ## 👨‍💻 시도한 것과 이유 & 궁금증 
 1.  추상 클래스로 적용한 이유 
 
-1) ExchangeCalculator
+  - 1) ExchangeCalculator
 
 이번 프로젝트를 적용하면서 확장 가능성과 변경 가능성에 열어두고 작성을 해보았습니다. 
 적용해본 예로는 소수점 처리 계산 부분입니다. 
@@ -91,7 +91,7 @@ abstract로 빼 2째 자리로 처리해도 되고 만약 처리 하는 방법�
 또다른 서비스 로직을 작성할 필요 없이 소수점 처리만 변경 혹은 작성하면 된다고 생각해 abstract class로 빼 보았습니다. 
 그리고 ExchangeCalculator는 단순 소수점 처리만 하는 기능이기 때문에 Service에 있는 것 보다는 따로 기능을 빼서 처리하는게 좋다고 판단이 되었습니다. 
 
-2) ExchangeFormatter
+  - 2) ExchangeFormatter
 
 인터패이스로 ExchangeForamtter라는 값을 갖고, ExchangeForamtterImpl을 정의했다. 
 CurrencyName을 갖고 true일 경우 버리고, 아닐 경우 2째 자리 까지만 표기 하는 기능 

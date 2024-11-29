@@ -20,15 +20,18 @@ public class ExchangeResponseDto {
     private BigDecimal amountInKrw;
     private BigDecimal amountAfterExchange;
     private ExchangeStatus exchangeStatus;
+    private String formattedAmount;
 
 
-    public static ExchangeResponseDto fromEntity(Exchange exchange) {
+    public static ExchangeResponseDto fromEntity(Exchange exchange,  String formattedAmount) {
         return ExchangeResponseDto.builder()
                 .userName(exchange.getUser().getName())
                 .currencyName(exchange.getCurrency().getCurrencyName())
                 .amountInKrw(exchange.getAmountInKrw())
                 .amountAfterExchange(exchange.getAmountAfterExchange())
                 .exchangeStatus(exchange.getExchangeStatus())
+                .formattedAmount(formattedAmount)
                 .build();
     }
+
 }

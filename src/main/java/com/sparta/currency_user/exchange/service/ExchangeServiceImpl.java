@@ -9,6 +9,7 @@ import com.sparta.currency_user.exchange.dto.ExchangeRequestDto;
 import com.sparta.currency_user.exchange.dto.ExchangeResponseDto;
 import com.sparta.currency_user.exchange.dto.ExchangeSumDto;
 import com.sparta.currency_user.exchange.entity.Exchange;
+import com.sparta.currency_user.exchange.formatter.ExchangeFormatter;
 import com.sparta.currency_user.exchange.repository.ExchangeRepository;
 import com.sparta.currency_user.type.CurrencyName;
 import com.sparta.currency_user.exception.type.ErrorType;
@@ -17,7 +18,6 @@ import com.sparta.currency_user.user.entity.User;
 import com.sparta.currency_user.user.service.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,13 +35,15 @@ public class ExchangeServiceImpl implements ExchangeService {
     private final ExchangeRepository exchangeRepository;
     private final UserService userService;
     private final RoundExchangeCalculator roundExchangeCalculator;
+    private final ExchangeFormatter exchangeFormatter;
 
-    public ExchangeServiceImpl(EntityManager em, CurrencyService currencyService, ExchangeRepository exchangeRepository, UserService userService, RoundExchangeCalculator roundExchangeCalculator) {
+    public ExchangeServiceImpl(EntityManager em, CurrencyService currencyService, ExchangeRepository exchangeRepository, UserService userService, RoundExchangeCalculator roundExchangeCalculator, ExchangeFormatter exchangeFormatter) {
         this.em = em;
         this.currencyService = currencyService;
         this.exchangeRepository = exchangeRepository;
         this.userService = userService;
         this.roundExchangeCalculator = roundExchangeCalculator;
+        this.exchangeFormatter = exchangeFormatter;
     }
 
     /**
@@ -57,30 +59,22 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Transactional
     @Override
     public ExchangeResponseDto performExchange(ExchangeRequestDto exchangeRequestDto) {
-        //통화 정보 조회
+        // 통화 정보 조회
         CurrencyResponseDto currency = currencyService.findById(exchangeRequestDto.getCurrencyId());
-        log.info("해당 통화 ID 가져오기 : {}", exchangeRequestDto.getCurrencyId());
+        log.info("환전 요청 통화 ID: {}", exchangeRequestDto.getCurrencyId());
 
-        //소수점 처리 방식 결정
-        boolean isWholeNumber = CurrencyName.valueOf(String.valueOf(currency.getCurrencyName())).isWholeNumber();
-        log.info("소수점 여부 (wholeNumber): {}", isWholeNumber);
+        // 환전 금액 계산
+        BigDecimal amountExchange = calculateAmountAfterExchange(exchangeRequestDto.getAmountInKrw(), currency);
 
-        //환전 계산 수행
-        BigDecimal amountExchange = roundExchangeCalculator.calculateExchangeAmount
-                (exchangeRequestDto.getAmountInKrw(), currency.getExchangeRate(), isWholeNumber);
-        log.info("환율 값 가져오기: {}", currency.getExchangeRate());
-
-        //환전 정보 저장
+        // 환전 정보 저장
         Exchange exchange = saveExchange(exchangeRequestDto, amountExchange);
-        log.info("환전 정보 저장 시작. 환전 후 금액: {}", amountExchange);
+        log.info("환전 정보 저장 완료. 금액: {}", amountExchange);
 
-        String formattedAmount = exchange.getCurrency()
-                .getCurrencyName()
-                .formatAmount(amountExchange);
+        // 포맷된 금액 생성
+        String formattedAmount = exchangeFormatter.formatAmount(amountExchange, currency);
 
-        log.info("환전 후 금액 : {}", formattedAmount);
-
-        return ExchangeResponseDto.fromEntity(exchange);
+        // DTO 변환 및 반환
+        return ExchangeResponseDto.fromEntity(exchange, formattedAmount);
     }
 
     /**
@@ -91,31 +85,38 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Transactional(readOnly = true)
     @Override
     public ExchangeResponseDto getExchangeById(Long exchangeId) {
-        Exchange exchangeById = exchangeRepository.findById(exchangeId)
+        Exchange exchange = exchangeRepository.findById(exchangeId)
                 .orElseThrow(() -> new CustomException(ErrorType.EXCHANGE_NOT_FOUND));
 
-        return ExchangeResponseDto.fromEntity(exchangeById);
+        // 포맷된 금액 생성
+        String formattedAmount = exchangeFormatter.formatAmount(exchange.getAmountAfterExchange(), CurrencyResponseDto.toDto(exchange.getCurrency()));
+
+        // DTO 변환 및 반환
+        return ExchangeResponseDto.fromEntity(exchange, formattedAmount);
     }
+
 
     /**
      * user가 진행 했던 환전 내역 결과 표현
      * @Param userId 사용자 Id
      * @return 환전 내역을 포함한 DTO List
      */
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<ExchangeResponseDto> getExchanges(Long userId) {
-        // 사용자 ID로 환전 내역 조회
-        String sql = "select e from Exchange e where e.user.id = :userId";
-        List<Exchange> exchanges = em.createQuery(sql, Exchange.class)
-                .setParameter("userId", userId)
-                .getResultList();
+        List<Exchange> exchanges = exchangeRepository.findByUserId(userId);
 
         if (exchanges.isEmpty()) {
-            throw new IllegalArgumentException("해당 USER에서 환전 내역을 찾을 수 없습니다.");
+            throw new CustomException(ErrorType.NO_HISTORY_FOUND);
         }
 
-        return exchanges.stream().map(ExchangeResponseDto::fromEntity).collect(Collectors.toList());
+        // 포맷된 금액을 포함하여 DTO 생성 및 반환
+        return exchanges.stream()
+                .map(exchange -> {
+                    String formattedAmount = exchangeFormatter.formatAmount(exchange.getAmountAfterExchange(), CurrencyResponseDto.toDto(exchange.getCurrency()));
+                    return ExchangeResponseDto.fromEntity(exchange, formattedAmount);
+                })
+                .collect(Collectors.toList());
     }
 
 
@@ -133,30 +134,21 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Transactional
     @Override
     public List<ExchangeResponseDto> updateExchangeStatus(Long userId, Long currencyId, ExchangeStatus exchangeStatus) {
-        // 업데이트 쿼리 실행
-        String jpql = "update Exchange e set e.exchangeStatus = :exchangeStatus " +
-                "where e.user.id = :userId and e.currency.id = :currencyId";
-        int update = em.createQuery(jpql)
-                .setParameter("exchangeStatus", exchangeStatus)
-                .setParameter("userId", userId)
-                .setParameter("currencyId", currencyId)
-                .executeUpdate();
+        int updatedCount = exchangeRepository.updateExchangeStatus(exchangeStatus, userId, currencyId);
 
-        // 업데이트 실패 처리
-        if (update == 0) {
+        if (updatedCount == 0) {
             throw new CustomException(ErrorType.UPDATE_FAILED);
         }
 
-        // 업데이트된 데이터 조회
-        String selectSql = "select e from Exchange e where e.user.id = :userId and e.currency.id = :currencyId";
-        List<Exchange> exchanges = em.createQuery(selectSql, Exchange.class)
-                .setParameter("userId", userId)
-                .setParameter("currencyId", currencyId)
-                .getResultList();
+        List<Exchange> updatedExchanges = exchangeRepository.findByUserIdAndCurrencyId(userId, currencyId);
 
-        // DTO 변환 및 반환
-        return exchanges.stream()
-                .map(ExchangeResponseDto::fromEntity)
+        // 포맷된 금액을 포함하여 DTO 생성 및 반환
+        return updatedExchanges.stream()
+                .map(exchange -> {
+                    BigDecimal recalculatedAmount = calculateAmountAfterExchange(exchange.getAmountInKrw(), CurrencyResponseDto.toDto(exchange.getCurrency()));
+                    String formattedAmount = exchangeFormatter.formatAmount(recalculatedAmount, CurrencyResponseDto.toDto(exchange.getCurrency()));
+                    return ExchangeResponseDto.fromEntity(exchange, formattedAmount);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -165,19 +157,11 @@ public class ExchangeServiceImpl implements ExchangeService {
      * @param userId 사용자 ID
      * @return 사용자 ID별 환전 횟수와 총 금액을 포함한 DTO
      */
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public ExchangeSumDto getExchangeSumDto(Long userId) {
-        String jpql = "SELECT new com.sparta.currency_user.exchange.dto.ExchangeSumDto(COUNT(e), SUM(e.amountInKrw)) " +
-                "FROM Exchange e " +
-                "WHERE e.user.id = :userId " +
-                "GROUP BY e.user.id";
-
         try {
-            Query query = em.createQuery(jpql, ExchangeSumDto.class);
-            query.setParameter("userId", userId);
-
-            return (ExchangeSumDto) query.getSingleResult();
+            return exchangeRepository.calculateExchangeSummary(userId);
         } catch (NoResultException e) {
             throw new CustomException(ErrorType.USER_NOT_FOUND);
         }
@@ -197,5 +181,14 @@ public class ExchangeServiceImpl implements ExchangeService {
 
         exchangeRepository.save(exchange);
         return exchange;
+    }
+
+    private BigDecimal calculateAmountAfterExchange(BigDecimal amountInKrw, CurrencyResponseDto currency) {
+        // 소수점 처리 방식 결정
+        boolean isWholeNumber = CurrencyName.valueOf(currency.getCurrencyName().toString()).isWholeNumber();
+        log.info("소수점 처리 여부: {}", isWholeNumber);
+
+        // 환율 계산
+        return roundExchangeCalculator.calculateExchangeAmount(amountInKrw, currency.getExchangeRate(), isWholeNumber);
     }
 }

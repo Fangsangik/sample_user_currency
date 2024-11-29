@@ -1,6 +1,6 @@
 package com.sparta.currency_user.user.service;
 
-import com.sparta.currency_user.exception.CustomError;
+import com.sparta.currency_user.exception.CustomException;
 import com.sparta.currency_user.user.dto.UserRequestDto;
 import com.sparta.currency_user.user.dto.UserResponseDto;
 import com.sparta.currency_user.user.entity.User;
@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
     public User findUserById(Long id) {
         return userRepository
                 .findById(id)
-                .orElseThrow(() -> new CustomError(USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)

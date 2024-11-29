@@ -3,7 +3,7 @@ package com.sparta.currency_user.exchange.service;
 import com.sparta.currency_user.currency.dto.CurrencyResponseDto;
 import com.sparta.currency_user.currency.entity.Currency;
 import com.sparta.currency_user.currency.service.CurrencyService;
-import com.sparta.currency_user.exception.CustomError;
+import com.sparta.currency_user.exception.CustomException;
 import com.sparta.currency_user.exchange.calculator.RoundExchangeCalculator;
 import com.sparta.currency_user.exchange.dto.ExchangeRequestDto;
 import com.sparta.currency_user.exchange.dto.ExchangeResponseDto;
@@ -92,7 +92,7 @@ public class ExchangeServiceImpl implements ExchangeService {
     @Override
     public ExchangeResponseDto getExchangeById(Long exchangeId) {
         Exchange exchangeById = exchangeRepository.findById(exchangeId)
-                .orElseThrow(() -> new CustomError(ErrorType.EXCHANGE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorType.EXCHANGE_NOT_FOUND));
 
         return ExchangeResponseDto.fromEntity(exchangeById);
     }
@@ -128,7 +128,7 @@ public class ExchangeServiceImpl implements ExchangeService {
      * @param currencyId 통화 ID
      * @param exchangeStatus 변경할 환전 상태
      * @return 업데이트된 환전 내역을 포함한 DTO 리스트
-     * @throws CustomError 업데이트된 데이터가 없을 경우 발생
+     * @throws CustomException 업데이트된 데이터가 없을 경우 발생
      */
     @Transactional
     @Override
@@ -144,7 +144,7 @@ public class ExchangeServiceImpl implements ExchangeService {
 
         // 업데이트 실패 처리
         if (update == 0) {
-            throw new CustomError(ErrorType.UPDATE_FAILED);
+            throw new CustomException(ErrorType.UPDATE_FAILED);
         }
 
         // 업데이트된 데이터 조회
@@ -179,7 +179,7 @@ public class ExchangeServiceImpl implements ExchangeService {
 
             return (ExchangeSumDto) query.getSingleResult();
         } catch (NoResultException e) {
-            throw new CustomError(ErrorType.USER_NOT_FOUND);
+            throw new CustomException(ErrorType.USER_NOT_FOUND);
         }
     }
 

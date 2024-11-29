@@ -5,7 +5,7 @@ import com.sparta.currency_user.currency.dto.CurrencyResponseDto;
 import com.sparta.currency_user.currency.entity.Currency;
 import com.sparta.currency_user.currency.repository.CurrencyRepository;
 import com.sparta.currency_user.currency.validate.CurrencyValidator;
-import com.sparta.currency_user.exception.CustomError;
+import com.sparta.currency_user.exception.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +34,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     @Override
     public Currency findCurrencyById(Long id) {
         return currencyRepository.findById(id)
-                .orElseThrow(() -> new CustomError(INVALID_CURRENCY_EXCEPTION));
+                .orElseThrow(() -> new CustomException(INVALID_CURRENCY_EXCEPTION));
     }
 
     @Transactional(readOnly = true)
@@ -50,7 +50,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
             // 환전 이름과, 표기가 맞는지 확인
             if (!currencyRequestDto.checkSymbol()) {
-                throw new CustomError(SYMBOL_NOT_MATCH);
+                throw new CustomException(SYMBOL_NOT_MATCH);
             }
 
             //DB에 환률 값이 음수 또는 0이면 안되기 때문에 예외처리가 필요하다고 생각
@@ -62,7 +62,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             Currency savedCurrency = currencyRepository.save(CurrencyRequestDto.toEntity(currencyRequestDto));
             return new CurrencyResponseDto(savedCurrency);
         } catch (IllegalArgumentException e) {
-            throw new CustomError(CURRENCY_SAVE_FAILED);
+            throw new CustomException(CURRENCY_SAVE_FAILED);
         }
     }
 

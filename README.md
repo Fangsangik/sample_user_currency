@@ -16,7 +16,8 @@
   - Service : CRU 
   - 통화 종류에 따라 소수점 나눔 or 버림
   - 통화 종류는 Enum 으로 처리
-  - Currency Validation : PostConstruct를 통헤 DB 값에 잘못 들어간 값들이 있다면 log를 통해 표출 하도록 함 
+  - Currency Validation : PostConstruct를 통헤 DB 값에 잘못 들어간 값들이 있다면 log를 통해 표출 하도록 함
+  - CurrencyName을 따로 Enum으로 표기해 통화와 심볼을 표기 
 
 - Exchange 
   - Service : CRU 
@@ -106,4 +107,22 @@ CustomError를 상황별로 나누는게 맞을까 라는 궁금증이 생겼다
 예를 들어 NotFoundError, InvalidInputError등 CustomError를 만들어 RuntimeException을 각각 상속받아 공통 ErrorType을 처리하는게 좋은지, 
 아니면 내가 작성한 방법으로만 해도  충분할까 라는 의문이 들었다. 
 설계 방향에 따라 달라질 수는 있겠지만, 현업에서는 나누는지 아니면 공통된 CustomError로 처리해서 가는지에 대한 궁금증이 있다. 
+
+7. AllargsConstructor와 NoArgsConstructor RequiredArgConsturctor
+AllargsConstructor와 NoArgsConstructor, RequiredArgConsturctor를 Annotation을 따로 적용하지 않고, 직접 필요한 생성자를 생성해 사용했습니다.
+항상 자동에 의존하는 것 보다는 직접 제가 제어 할 수 있는 방향으로 code를 작성하는 것이 좋다는 생각이 들어 이번에는 직접 눈으로 확인할 수 있는 방향으로
+Code를 작성했습니다. 
+
+## 다음 프로젝트때 시도 해 볼것들 
+1. Set은 불변성을 해친다고해 사용하면 좋지 않다는 이야기를 들었다. 하지만 set을 사용하기 이전에 사전에 불변성을 처리해준다면 set을 사용해도 되지 않을까 라는 생각이 들었다.
+
+2. Builder의 커스텀화 
+이번 프로젝트때는 Builder를 생성자 level에 처리했지만, 다음번에는 Builder를 직접 만들어 사용해보고 싶다는 생각이 들었다 
+
+3. interface와 Abstract를 좀더 적극 활용해보기 
+어떤 기능을 확장 가능성을 여러두고 작성하는 일은 어렵다. 하지만 시도는 해보고 싶다. 
+
+4. 동시성 문제 고려해보기 
+낙관적 락과, 비관적 락의 차이를 공부하고, 동시성이 문제가 될만한 기능들을 고려해 적용해보고 싶다.    
+
 

@@ -28,8 +28,6 @@ public class Exchange extends BaseEntity {
     @JoinColumn(name = "currency_id")
     private Currency currency; // 환전 대상 통화 (Currency 테이블과의 관계)
 
-    private int exchangeCount;
-
     @Enumerated(EnumType.STRING)
     private ExchangeStatus exchangeStatus;
 

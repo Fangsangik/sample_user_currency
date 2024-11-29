@@ -22,7 +22,8 @@ public enum ErrorType {
 
     //CurrencyName
     SYMBOL_NOT_MATCH("ERRO10", "표기가 일치하지 않습니다." , 400),
-    CURRENCY_MUST_OVER_THAN_ZERO("ERRO011", "환율은 0보다 커야 합니다." , 400);
+    CURRENCY_MUST_OVER_THAN_ZERO("ERRO011", "환율은 0보다 커야 합니다." , 400),
+    NO_HISTORY_FOUND("ERR012", "해당 이력이 없습니다." , 404);
 
     private String errorCode;
     private String message;

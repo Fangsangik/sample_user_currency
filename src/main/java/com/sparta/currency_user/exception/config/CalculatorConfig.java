@@ -1,4 +1,4 @@
-package com.sparta.currency_user.exchange.config;
+package com.sparta.currency_user.exception.config;
 
 import com.sparta.currency_user.exchange.calculator.ExchangeCalculator;
 import com.sparta.currency_user.exchange.calculator.RoundExchangeCalculator;

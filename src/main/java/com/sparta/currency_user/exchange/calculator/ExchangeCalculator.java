@@ -1,6 +1,6 @@
 package com.sparta.currency_user.exchange.calculator;
 
-import com.sparta.currency_user.exception.CustomError;
+import com.sparta.currency_user.exception.CustomException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,7 +14,7 @@ public abstract class ExchangeCalculator {
 
     public BigDecimal calculateExchangeAmount(BigDecimal amountInKrw, BigDecimal exchangeRate, boolean isWholeNumber) {
         if (exchangeRate.compareTo(BigDecimal.ZERO) == 0) {
-            throw new CustomError(INVALID_CURRENCY_EXCEPTION);
+            throw new CustomException(INVALID_CURRENCY_EXCEPTION);
         }
 
         int scale = getScale(isWholeNumber);

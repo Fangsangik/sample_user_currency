@@ -21,7 +21,8 @@
 
 - Exchange 
   - Service : CRU 
-  - User와 Exchange의 중간 테이블 
+  - User와 Exchange의 중간 테이블
+  - Status의 enum 처리 
    
 ## 🥵 Trouble Shooting
 - BigDecimal.setScale을 사용해 소수점 이하를 버리거나 반올림 하려고 했는데 버림이 적용이 안됨 
@@ -77,6 +78,7 @@ public abstract class ExchangeCalculator {
    
 ## 👨‍💻 시도한 것과 이유 & 궁금증 
 1. ExchangeCalculator를 추상 클래스로 적용한 이유 
+
 이번 프로젝트를 적용하면서 확장 가능성과 변경 가능성에 열어두고 작성을 해보았습니다. 
 적용해본 예로는 소수점 처리 계산 부분입니다. 
 abstract로 빼 2째 자리로 처리해도 되고 만약 처리 하는 방법이 2째 자리를 두고 다른 통화의 경우 3째자리 까지만 변경하라고 한다면 그 부분만 작성하면 된다고 생각했습니다. 
@@ -84,24 +86,29 @@ abstract로 빼 2째 자리로 처리해도 되고 만약 처리 하는 방법�
 그리고 ExchangeCalculator는 단순 소수점 처리만 하는 기능이기 때문에 Service에 있는 것 보다는 따로 기능을 빼서 처리하는게 좋다고 판단이 되었습니다. 
 
 2. toEntiy toDto 
+
 정적 메서드 처리 
 Mapstrcut와 Componet로 등록해 빈으로 관리했던 방법과는 달리, 정적 메서드로 처리했습니다. 
 
-3. Builder 패턴을 생성자에 처리 
+3. Builder 패턴을 생성자에 처리
+ 
 예전 프로젝트들은 빌더 패턴을 class level에 처리해 원하지 않는 entity의 id 값 까지 Builder에 포함되는 경우가 있었습니다. 
 하지만 생성자 level에 처리해 builder에 대한 제약이라면 제약일 수 있는 것을 걸어두어 사용했습니다. 
 
-4. RequestDto와 ResponseDto 
+4. RequestDto와 ResponseDto
+ 
 DTO는 데이터를 전달하고, 검증하는 것의 역할이지 모든 데이터를 갖고 있을 필요는 없다고 생각이 들었습니다. 
 이전에는 DTO에 모든 데이터가 들어가있어야 한고, 보여줄때만 ResponseDTO에서 PostMan을 호출할때 걸러서 보여주면 된다고 생각했지만 그게 아닌,
 필요한 데이터만 들어가면 된다고 생각이 바뀌어 DTO의 필드 값을 제약적으로 사용했습니다.
 
-5. PostConstruct의 기능에 필요성의 의문 
+5. PostConstruct의 기능에 필요성의 의문
+ 
 PostConstruct는 기존 DB에 있는 값이 잘못된 값이 있는지 없는지를 Spring이 시작 된후 DB에 접근해 잘못된 값이 있다면 
 log를 통해 보여주는 것으로 알고 있습니다. 
 하지만 애초에 서비스 로직에서 DB에 들어가는 값의 검증 부분을 적절히 처리한다면 필요성에 대한 의문이 들었습니다. 
 
 6. CustomError에 대한 궁금증 
+
 지금은 CustomError라는 클래스 하나에 ErrorType이 적용 되어 잘못된 값이 호출이 되면 내가 적용한 ErrorType을 사용자에게 보여주는 방향으로 설계가 되어있다 
 CustomError를 상황별로 나누는게 맞을까 라는 궁금증이 생겼다 
 예를 들어 NotFoundError, InvalidInputError등 CustomError를 만들어 RuntimeException을 각각 상속받아 공통 ErrorType을 처리하는게 좋은지, 
@@ -109,20 +116,26 @@ CustomError를 상황별로 나누는게 맞을까 라는 궁금증이 생겼다
 설계 방향에 따라 달라질 수는 있겠지만, 현업에서는 나누는지 아니면 공통된 CustomError로 처리해서 가는지에 대한 궁금증이 있다. 
 
 7. AllargsConstructor와 NoArgsConstructor RequiredArgConsturctor
+
 AllargsConstructor와 NoArgsConstructor, RequiredArgConsturctor를 Annotation을 따로 적용하지 않고, 직접 필요한 생성자를 생성해 사용했습니다.
 항상 자동에 의존하는 것 보다는 직접 제가 제어 할 수 있는 방향으로 code를 작성하는 것이 좋다는 생각이 들어 이번에는 직접 눈으로 확인할 수 있는 방향으로
 Code를 작성했습니다. 
 
 ## 다음 프로젝트때 시도 해 볼것들 
-1. Set은 불변성을 해친다고해 사용하면 좋지 않다는 이야기를 들었다. 하지만 set을 사용하기 이전에 사전에 불변성을 처리해준다면 set을 사용해도 되지 않을까 라는 생각이 들었다.
+1. Set의 사용 
 
-2. Builder의 커스텀화 
+불변성을 해친다고해 사용하면 좋지 않다는 이야기를 들었다. 하지만 set을 사용하기 이전에 사전에 불변성을 처리해준다면 set을 사용해도 되지 않을까 라는 생각이 들었다.
+
+2. Builder의 커스텀화
+ 
 이번 프로젝트때는 Builder를 생성자 level에 처리했지만, 다음번에는 Builder를 직접 만들어 사용해보고 싶다는 생각이 들었다 
 
 3. interface와 Abstract를 좀더 적극 활용해보기 
+
 어떤 기능을 확장 가능성을 여러두고 작성하는 일은 어렵다. 하지만 시도는 해보고 싶다. 
 
 4. 동시성 문제 고려해보기 
+
 낙관적 락과, 비관적 락의 차이를 공부하고, 동시성이 문제가 될만한 기능들을 고려해 적용해보고 싶다.    
 
 

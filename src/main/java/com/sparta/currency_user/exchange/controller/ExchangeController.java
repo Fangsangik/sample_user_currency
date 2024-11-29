@@ -2,6 +2,7 @@ package com.sparta.currency_user.exchange.controller;
 
 import com.sparta.currency_user.exchange.dto.ExchangeRequestDto;
 import com.sparta.currency_user.exchange.dto.ExchangeResponseDto;
+import com.sparta.currency_user.exchange.dto.ExchangeResponseFormatterDto;
 import com.sparta.currency_user.exchange.dto.ExchangeSumDto;
 import com.sparta.currency_user.exchange.service.ExchangeService;
 import jakarta.validation.Valid;
@@ -39,8 +40,8 @@ public class ExchangeController {
     }
 
     @PutMapping("/update-status")
-    public ResponseEntity<List<ExchangeResponseDto>> updateExchangeStatus(@Valid @RequestBody ExchangeRequestDto request) {
-        List<ExchangeResponseDto> response = exchangeService.updateExchangeStatus(
+    public ResponseEntity<List<ExchangeResponseFormatterDto>> updateExchangeStatus(@Valid @RequestBody ExchangeRequestDto request) {
+        List<ExchangeResponseFormatterDto> response = exchangeService.updateExchangeStatus(
                 request.getUserId(), request.getCurrencyId(), request.getExchangeStatus());
         return ResponseEntity.ok(response);
     }
